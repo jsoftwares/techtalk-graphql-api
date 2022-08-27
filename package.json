@@ -1,0 +1,24 @@
+{
+  "name": "graphql-api-tecktalk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "graphql",
+    "tecktalk",
+    "nodejs",
+    "api",
+    "backend",
+    "graphql api"
+  ],
+  "author": "Jeffrey Onochie",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.1",
+    "express-graphql": "^0.12.0",
+    "graphql": "^16.6.0"
+  }
+}
