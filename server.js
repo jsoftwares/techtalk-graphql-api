@@ -1,77 +1,44 @@
+const path = require('path');
 const express = require('express');
-const {buildSchema} = require('graphql');
 const {graphqlHTTP} = require('express-graphql');
+const {makeExecutableSchema} = require('@graphql-tools/schema');
+const {loadFilesSync} = require('@graphql-tools/load-files');
 
-const schema = buildSchema(`
-    type Query {
-        products: [Product]
-        orders: [Order]
-    }
+/**loadFilesSync() in our usage helps load/merge all files that ends with .graphql in any folder relative to 
+ * server.js file. It returns as array of strings.
+ */
+const typesArray = loadFilesSync(path.join(__dirname, '**/*.graphql'));
+const resolverArray = loadFilesSync(path.join(__dirname, '**/*.resolvers.js'));
 
-    type Product {
-        id: ID!
-        title: String!
-        description: String
-        reviews: [Review]
-        price: Float!
-    }
+const schema = makeExecutableSchema({
+    typeDefs: typesArray,
+    resolvers: resolverArray
+    // {
+    //     Query: {
+    //         products: async (parent, args, context, info) => {
+    //             console.log('Getting products');
+    //             const products = await Promise.resolve(parent.products);
+    //             return products;
+    //         },
+    //         orders: (parent) => {
+    //             console.log('Getting orders');
+    //             return parent.orders;
+    //         }
+    //     }
+    // }
+});
 
-    type Review {
-        rating: Int!
-        comment: String!
-    }
-
-    type Order {
-        date: String!
-        subtotal: Float!
-        items: [OrderItem]
-    }
-
-    type OrderItem {
-        product: Product!
-        quantity: Int!
-    }
-`);
-
-const root = {
-    products: [
-        {
-            id: 'redshoe',
-            title: 'Red Shoe',
-            description: 'A red smart shoe',
-            price: 42.12
-        },
-        {
-            id: 'bluejeans',
-            title: 'Blue Jeans',
-            description: 'A blue smart jeans',
-            price: 55.55
-        },
-    ],
-    orders: [
-        {
-            date: '2008-07-27',
-            subtotal: 90.22,
-            items: [
-                {
-                    product: {
-                        id: 'redshoe',
-                        title: 'Red Shoe',
-                        description: 'A red smart shoe',
-                        price: 42.12
-                    },
-                    quantity: 2
-                }
-            ]
-        }
-    ] 
-};
+// Data now comes from out executable schema from each of our resolver functions that talk directly to our models
+// const root = {
+//     products: require('./products/products.model'),
+//     orders: require('./orders/orders.model')
+// };
 
 const app = express();
 
 app.use('/graphql', graphqlHTTP({
     schema,
-    rootValue: root,
+    // rootValue: root,
     graphiql: true
 }));
 
