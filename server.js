@@ -1,45 +1,31 @@
 const path = require('path');
 const express = require('express');
-const {graphqlHTTP} = require('express-graphql');
+const {ApolloServer} = require('apollo-server-express');
 const {makeExecutableSchema} = require('@graphql-tools/schema');
 const {loadFilesSync} = require('@graphql-tools/load-files');
 
-/**loadFilesSync() in our usage helps load/merge all files that ends with .graphql in any folder relative to 
- * server.js file. It returns as array of strings.
- */
+
 const typesArray = loadFilesSync(path.join(__dirname, '**/*.graphql'));
 const resolverArray = loadFilesSync(path.join(__dirname, '**/*.resolvers.js'));
 
-const schema = makeExecutableSchema({
-    typeDefs: typesArray,
-    resolvers: resolverArray
-    // {
-    //     Query: {
-    //         products: async (parent, args, context, info) => {
-    //             console.log('Getting products');
-    //             const products = await Promise.resolve(parent.products);
-    //             return products;
-    //         },
-    //         orders: (parent) => {
-    //             console.log('Getting orders');
-    //             return parent.orders;
-    //         }
-    //     }
-    // }
-});
+async function startApolloServer() {
+    const app = express();
+    
+    const schema = makeExecutableSchema({
+        typeDefs: typesArray,
+        resolvers: resolverArray
+    });
 
-// Data now comes from out executable schema from each of our resolver functions that talk directly to our models
-// const root = {
-//     products: require('./products/products.model'),
-//     orders: require('./orders/orders.model')
-// };
+    const server = new ApolloServer({
+        schema,
+    });
+    await server.start();   //tells apollo to prepare to handle incoming GraphQL operations
+    // applyMiddleware() connects apollo's  GraphQL middleware with our express server
+    server.applyMiddleware({ app, path: '/graphql'});
 
-const app = express();
+    // Finally we start listening for HTTP requests (whether they are GraphQL or other requests that would be handled by express)
+    app.listen(3000, () => console.log('Running GraphQL server...'));
+}
 
-app.use('/graphql', graphqlHTTP({
-    schema,
-    // rootValue: root,
-    graphiql: true
-}));
+startApolloServer();
 
-app.listen(3000, () => console.log('Running GraphQL server...'));
